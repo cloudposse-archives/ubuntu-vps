@@ -42,6 +42,7 @@ RUN apt-get update && \
                     whois \
                     dnsutils \
                     traceroute \
+                    telnet \
                     mtr \
                     bundler \
                     libxml2 \
