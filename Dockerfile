@@ -84,7 +84,7 @@ RUN locale-gen $LANGUAGE && \
     dpkg-reconfigure -f noninteractive tzdata
 
 ADD import-github-ssh-keys.sh /usr/local/bin/import-github-ssh-keys.sh
-ADD bootstrap.sh  /usr/local/bin/bootstrap.sh
+ADD start /start
 ADD env.sh /etc/profile.d/
 ADD motd /etc/motd
 ADD .vimrc /root/.vimrc
@@ -92,5 +92,5 @@ ADD .vimrc /etc/skel/.vimrc
 
 EXPOSE 22
 
-CMD bootstrap.sh && /usr/sbin/sshd -D -e
+ENTRYPOINT ["/start"]
 
