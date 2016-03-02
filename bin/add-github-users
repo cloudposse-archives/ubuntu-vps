@@ -21,6 +21,16 @@ for GITHUB_USER in $(echo "$VPS_GITHUB_USERS" | tr ', ' '\n'); do
     echo -e '\nHost gitlab.com\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null' >> "$SSH_CONFIG_DIR/config"
   fi
 
+if [ -n "${DB_USER:-}" ]; then
+cat<< __EOF__ >"$USER_HOME/.my.cnf"
+[client]
+user=${DB_USER:-}
+password=${DB_PASS:-}
+database=${DB_NAME:-}
+host=${DB_HOST:-}
+__EOF__
+fi
+
   chown "$GITHUB_USER" -R "$SSH_CONFIG_DIR"
 
   if [ "$VPS_ENABLE_SUDO" = "true" ]; then 

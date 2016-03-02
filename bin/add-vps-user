@@ -24,14 +24,6 @@ password=${DB_PASS:-}
 database=${DB_NAME:-}
 host=${DB_HOST:-}
 __EOF__
-
-[ -d /etc/env.d ] || mkdir -p /etc/env.d
-cat<< __EOF__ > "/etc/env.d/db.sh"
-export DB_USER=${DB_USER:-}
-export DB_PASS=${DB_PASS:-}
-export DB_NAME=${DB_NAME:-}
-export DB_HOST=${DB_HOST:-}
-__EOF__
 fi
 
 # Speed up boot time by moving to background
