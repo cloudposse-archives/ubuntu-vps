@@ -1,0 +1,35 @@
+#!/bin/bash -ue
+
+for GITHUB_USER in $(echo "$VPS_GITHUB_USERS" | tr ', ' '\n'); do 
+  USER_HOME="/home/$GITHUB_USER"
+  SSH_CONFIG_DIR="$USER_HOME/.ssh"
+  SSH_AUTHORIZED_KEYS="$SSH_CONFIG_DIR/authorized_keys"
+
+  [ -d "$SSH_CONFIG_DIR" ] || mkdir -p "$SSH_CONFIG_DIR" -m 0700
+
+  if [ ! -d "$USER_HOME" ]; then
+    echo "Creating home directory for $GITHUB_USER"
+    useradd --password "*" --create-home "$GITHUB_USER" --groups sudo,docker 2> /dev/null
+  fi
+
+  echo "Updating authorized_keys for $GITHUB_USER"
+  curl --silent "https://api.github.com/users/$GITHUB_USER/keys" | grep '"key":' | cut -d'"' -f4 > "$SSH_AUTHORIZED_KEYS"
+
+  if [ ! -f "$SSH_CONFIG_DIR/config" ]; then
+    echo "Creating default ssh config for $GITHUB_USER"
+    echo -e '\nHost github.com\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null' >> "$SSH_CONFIG_DIR/config"
+    echo -e '\nHost gitlab.com\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null' >> "$SSH_CONFIG_DIR/config"
+  fi
+
+  chown "$GITHUB_USER" -R "$SSH_CONFIG_DIR"
+
+  if [ "$VPS_ENABLE_SUDO" = "true" ]; then 
+    sudo usermod -aG sudo "$GITHUB_USER"
+  fi
+
+  # Run a local provisioner if one provided
+  if [ -x "$USER_HOME/.bootstrap" ]; then
+    (sudo -u "$GITHUB_USER" "$USER_HOME/.bootstrap")&
+  fi
+
+done

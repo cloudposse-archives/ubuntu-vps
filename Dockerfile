@@ -2,16 +2,16 @@ FROM ubuntu:14.04
 MAINTAINER Erik Osterman "e@osterman.com"
 
 # VPS Setup
-ENV VPS_GITHUB_USERS "" 
-ENV VPS_USER ubuntu
+ENV VPS_GITHUB_USERS=
+ENV VPS_USER=
 ENV VPS_GROUP $VPS_USER
-ENV VPS_PASSWORD ""
+ENV VPS_PASSWORD=
 ENV VPS_ENABLE_SUDO true
 
 # System ENV
 ENV TIMEZONE Etc/UTC
 ENV DEBIAN_FRONTEND noninteractive
-ENV PATH "$PATH:/usr/local/bin"
+ENV PATH "$PATH:/opt/bin:/usr/local/bin"
 ENV TERM xterm
 ENV PERL_MM_USE_DEFAULT true
 
@@ -83,7 +83,7 @@ RUN locale-gen $LANGUAGE && \
     echo "$TIMEZONE" > /etc/timezone && \
     dpkg-reconfigure -f noninteractive tzdata
 
-ADD import-github-ssh-keys.sh /usr/local/bin/import-github-ssh-keys.sh
+ADD bin /opt/bin
 ADD start /start
 ADD env.sh /etc/profile.d/
 ADD motd /etc/motd
