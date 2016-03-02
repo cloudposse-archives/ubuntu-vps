@@ -1,9 +1,12 @@
-#!/bin/bash -u
+#!/bin/bash
 
 # This is the only mandidory field
 [ -z "$VPS_USER" ] && (echo "VPS_USER not defined" && exit 1)
-[ -z "$VPS_GROUP" ] && (echo "VPS_GROUP not defined" && exit 1)
 [ -z "$VPS_PASSWORD" ] && [ -z "$VPS_GITHUB_USERS" ] && (echo "Must specify VPS_GITHUB_USERS or VPS_PASSWORD" && exit 1)
+
+echo "Configuring VPS user '$VPS_USER'"
+
+VPS_GROUP="${VPS_GROUP:-$VPS_USER}"
 
 PATH="$PATH:/usr/local/bin"
 
@@ -29,6 +32,8 @@ host=${DB_HOST:-}
 __EOF__
 fi
 
+[ -d "$SSH_CONFIG_DIR" ] || mkdir -p "$SSH_CONFIG_DIR" -m 0700
+
 if [ ! -f "$SSH_CONFIG_DIR/config" ]; then
   echo "Creating default ssh config for $VPS_USER"
   echo -e '\nHost *\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null' >> "$SSH_CONFIG_DIR/config"
@@ -37,7 +42,7 @@ fi
 if [ -n "${VPS_GITHUB_USERS}" ]; then
   echo "Updating $VPS_USER authorized_keys for $VPS_GITHUB_USERS"
   rm -f "$SSH_AUTHORIZED_KEYS"
-  echo "$VPS_GITHUB_USERS" | tr ',' '\n' | xargs -I'{}' curl --silent "https://api.github.com/users/${}/keys" | grep '"key":' | cut -d'"' -f4 >> "$SSH_AUTHORIZED_KEYS"
+  echo "$VPS_GITHUB_USERS" | tr ',' '\n' | xargs -I'{}' curl --silent "https://api.github.com/users/{}/keys" | grep '"key":' | cut -d'"' -f4 >> "$SSH_AUTHORIZED_KEYS"
 fi
 
 # Speed up boot time by moving to background
@@ -47,6 +52,7 @@ chmod 755 "$VPS_HOME"
 
 # Set the password for the user if one provided
 if [ ! -z "$VPS_PASSWORD" ]; then
+  echo "Setting password for $VPS_USER"
   echo "$VPS_USER:$VPS_PASSWORD" | chpasswd
   # Enable password-based logins
   sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/' /etc/ssh/sshd_config
@@ -54,12 +60,14 @@ if [ ! -z "$VPS_PASSWORD" ]; then
 fi
 
 if [ "$VPS_ENABLE_SUDO" = "true" ]; then 
+  echo "Enabling sudo for $VPS_USER"
   sudo usermod -aG sudo "$VPS_USER"
   unset VPS_ENABLE_SUDO
 fi
 
 # Run a local provisioner if one provided
 if [ -x "$VPS_HOME/.bootstrap" ]; then
+  echo "Running bootstrap script for $VPS_USER"
   (sudo -u "$VPS_USER" "$VPS_HOME/.bootstrap")&
 fi
 

@@ -1,10 +1,11 @@
 #!/bin/bash
 
-if [ -n "$VPS_USER" ]; 
+if [ -n "$VPS_USER" ]; then
   /opt/bin/add-vps-user
 fi
 
-if [ -n "$GITHUB_USERS" ]; then
+if [ -n "$VPS_GITHUB_USERS" ]; then
+  export VPS_GITHUB_USERS
   /opt/bin/add-github-users
 fi
 

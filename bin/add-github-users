@@ -1,22 +1,31 @@
-#!/bin/bash -ue
+#!/bin/bash
 
-for GITHUB_USER in $(echo "$VPS_GITHUB_USERS" | tr ', ' '\n'); do 
-  USER_HOME="/home/$GITHUB_USER"
+if [ -z "$VPS_GITHUB_USERS" ]; then
+  echo "VPS_GITHUB_USERS not set"
+  exit 1
+fi
+
+echo "Configuring GitHub Users '$VPS_GITHUB_USERS'"
+
+for USERNAME in $(echo "$VPS_GITHUB_USERS" | tr ', ' '\n'); do 
+  GROUP=$USERNAME
+  USER_HOME="/home/$USERNAME"
   SSH_CONFIG_DIR="$USER_HOME/.ssh"
   SSH_AUTHORIZED_KEYS="$SSH_CONFIG_DIR/authorized_keys"
 
-  [ -d "$SSH_CONFIG_DIR" ] || mkdir -p "$SSH_CONFIG_DIR" -m 0700
-
-  if [ ! -d "$USER_HOME" ]; then
-    echo "Creating home directory for $GITHUB_USER"
-    useradd --password "*" --create-home "$GITHUB_USER" --groups sudo,docker 2> /dev/null
+  id $USERNAME 2>/dev/null
+  if [ $? -ne 0 ]; then
+    echo "Adding user $USERNAME"
+    useradd --password "*" --create-home "$USERNAME" 2> /dev/null
   fi
 
-  echo "Updating authorized_keys for $GITHUB_USER"
-  curl --silent "https://api.github.com/users/$GITHUB_USER/keys" | grep '"key":' | cut -d'"' -f4 > "$SSH_AUTHORIZED_KEYS"
+  [ -d "$SSH_CONFIG_DIR" ] || mkdir -p "$SSH_CONFIG_DIR" -m 0700
+
+  echo "Updating authorized_keys for $USERNAME"
+  curl --silent "https://api.github.com/users/$USERNAME/keys" | grep '"key":' | cut -d'"' -f4 > "$SSH_AUTHORIZED_KEYS"
 
   if [ ! -f "$SSH_CONFIG_DIR/config" ]; then
-    echo "Creating default ssh config for $GITHUB_USER"
+    echo "Creating default ssh config for $USERNAME"
     echo -e '\nHost *\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null' >> "$SSH_CONFIG_DIR/config"
   fi
 
@@ -30,15 +39,17 @@ host=${DB_HOST:-}
 __EOF__
 fi
 
-  chown "$GITHUB_USER" -R "$SSH_CONFIG_DIR"
+  chown "$USERNAME:$GROUP" -R "$SSH_CONFIG_DIR"
 
-  if [ "$VPS_ENABLE_SUDO" = "true" ]; then 
-    sudo usermod -aG sudo "$GITHUB_USER"
+  if [ "$VPS_ENABLE_SUDO" == "true" ]; then 
+    echo "Enabling sudo for $USERNAME"
+    sudo usermod -aG sudo "$USERNAME"
   fi
 
   # Run a local provisioner if one provided
   if [ -x "$USER_HOME/.bootstrap" ]; then
-    (sudo -u "$GITHUB_USER" "$USER_HOME/.bootstrap")&
+    echo "Running bootstrap script"
+    (sudo -u "$USERNAME" "$USER_HOME/.bootstrap")&
   fi
 
 done
