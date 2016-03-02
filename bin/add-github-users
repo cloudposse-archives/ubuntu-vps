@@ -39,12 +39,13 @@ host=${DB_HOST:-}
 __EOF__
 fi
 
-  chown "$USERNAME:$GROUP" -R "$SSH_CONFIG_DIR"
 
   if [ "$VPS_ENABLE_SUDO" == "true" ]; then 
     echo "Enabling sudo for $USERNAME"
     sudo usermod -aG sudo "$USERNAME"
   fi
+
+  (chown "$USERNAME:$GROUP" -R "$USER_HOME")&
 
   # Run a local provisioner if one provided
   if [ -x "$USER_HOME/.bootstrap" ]; then
