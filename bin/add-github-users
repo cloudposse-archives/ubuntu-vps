@@ -16,7 +16,7 @@ for USERNAME in $(echo "$VPS_GITHUB_USERS" | tr ', ' '\n'); do
   id $USERNAME 2>/dev/null
   if [ $? -ne 0 ]; then
     echo "Adding user $USERNAME"
-    useradd --password "*" --create-home "$USERNAME" 2> /dev/null
+    useradd --password "*" --create-home "$USERNAME" --shell /bin/bash 2> /dev/null
   fi
 
   [ -d "$SSH_CONFIG_DIR" ] || mkdir -p "$SSH_CONFIG_DIR" -m 0700

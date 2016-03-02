@@ -13,7 +13,7 @@ PATH="$PATH:/usr/local/bin"
 # Create the user if they don't already exist
 id "$VPS_USER"
 if [ $? -ne 0 ]; then
-  adduser --disabled-password --gecos "" "$VPS_USER"
+  adduser --disabled-password --gecos "" --shell /bin/bash "$VPS_USER"
   adduser "$VPS_USER" "$VPS_GROUP"
 fi
 
