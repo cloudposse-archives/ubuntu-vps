@@ -17,8 +17,7 @@ for GITHUB_USER in $(echo "$VPS_GITHUB_USERS" | tr ', ' '\n'); do
 
   if [ ! -f "$SSH_CONFIG_DIR/config" ]; then
     echo "Creating default ssh config for $GITHUB_USER"
-    echo -e '\nHost github.com\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null' >> "$SSH_CONFIG_DIR/config"
-    echo -e '\nHost gitlab.com\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null' >> "$SSH_CONFIG_DIR/config"
+    echo -e '\nHost *\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null' >> "$SSH_CONFIG_DIR/config"
   fi
 
 if [ -n "${DB_USER:-}" ]; then

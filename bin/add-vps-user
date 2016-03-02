@@ -15,6 +15,9 @@ if [ $? -ne 0 ]; then
 fi
 
 VPS_HOME=$(getent passwd "$VPS_USER" | cut -d: -f6)
+SSH_CONFIG_DIR="$VPS_HOME/.ssh"
+SSH_AUTHORIZED_KEYS="$SSH_CONFIG_DIR/authorized_keys"
+
 
 if [ -n "${DB_USER:-}" ]; then
 cat<< __EOF__ >"$VPS_HOME/.my.cnf"
@@ -24,6 +27,17 @@ password=${DB_PASS:-}
 database=${DB_NAME:-}
 host=${DB_HOST:-}
 __EOF__
+fi
+
+if [ ! -f "$SSH_CONFIG_DIR/config" ]; then
+  echo "Creating default ssh config for $VPS_USER"
+  echo -e '\nHost *\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null' >> "$SSH_CONFIG_DIR/config"
+fi
+
+if [ -n "${VPS_GITHUB_USERS}" ]; then
+  echo "Updating $VPS_USER authorized_keys for $VPS_GITHUB_USERS"
+  rm -f "$SSH_AUTHORIZED_KEYS"
+  echo "$VPS_GITHUB_USERS" | tr ',' '\n' | xargs -I'{}' curl --silent "https://api.github.com/users/${}/keys" | grep '"key":' | cut -d'"' -f4 >> "$SSH_AUTHORIZED_KEYS"
 fi
 
 # Speed up boot time by moving to background
